@@ -1,0 +1,18 @@
+{
+  "name": "Gigi's Merch Ledger",
+  "short_name": "週邊記帳",
+  "description": "週邊花費記帳本",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fef6ec",
+  "theme_color": "#e87820",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
