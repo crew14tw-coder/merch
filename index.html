@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#e87820">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="週邊記帳">
+<link rel="manifest" href="manifest.json">
+<title>Merch Ledger</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --o:#e87820;--od:#b85010;--ol:#f4a030;
+  --c:#fef6ec;--c2:#fff8f0;--c3:#fdf0e0;
+  --b:#f0c890;--b2:#e8c090;
+  --t:#3a2008;--t2:#7a4820;--t3:#b09060;--t4:#c8a870;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--c);color:var(--t);font-family:'Noto Sans TC',sans-serif;font-size:15px;min-height:100vh;overscroll-behavior:none;}
+
+/* ── Layout ── */
+.stripe{height:6px;background:repeating-linear-gradient(90deg,var(--o) 0,var(--o) 18px,var(--ol) 18px,var(--ol) 36px);}
+.hdr{background:linear-gradient(150deg,#f6e2c4,#fef2dc);border-bottom:2px solid var(--b);padding:14px 16px 0;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(180,100,20,.1);}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.hdr-brand{display:flex;align-items:center;gap:10px;}
+.brand-eyebrow{font-size:9px;letter-spacing:3px;color:#c87020;text-transform:uppercase;font-weight:700;}
+.brand-name{font-size:19px;font-weight:800;color:var(--od);letter-spacing:.3px;}
+.hdr-sum{text-align:right;}
+.sum-label{font-size:9px;color:var(--t3);font-weight:600;letter-spacing:1px;text-transform:uppercase;}
+.sum-val{font-size:21px;font-weight:800;color:var(--o);line-height:1.1;}
+.tabs{display:flex;}
+.tab{flex:1;padding:10px 6px;background:transparent;color:#c07030;border:none;border-bottom:3px solid transparent;cursor:pointer;font-size:12px;font-family:inherit;font-weight:700;border-radius:8px 8px 0 0;transition:all .15s;letter-spacing:.5px;}
+.tab.on{background:var(--o);color:#fff;border-bottom-color:var(--od);}
+.tab-new{flex:0 0 auto!important;padding:10px 18px!important;}
+.page{padding:16px;max-width:600px;margin:0 auto;padding-bottom:60px;}
+
+/* ── Cross icon ── */
+.cross{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;position:relative;flex-shrink:0;}
+.cross::before,.cross::after{content:'';position:absolute;width:14px;height:2.5px;background:#7a3a1a;border-radius:2px;}
+.cross::before{transform:rotate(45deg);}
+.cross::after{transform:rotate(-45deg);}
+.cross-lg{width:28px;height:28px;}
+.cross-lg::before,.cross-lg::after{width:18px;height:3px;}
+.cross-sm{width:14px;height:14px;}
+.cross-sm::before,.cross-sm::after{width:9px;height:2px;background:#c8a060;}
+
+/* ── Search ── */
+.search-wrap{position:relative;margin-bottom:12px;}
+.search-in{width:100%;background:#fff;border:2px solid var(--b);border-radius:22px;color:var(--t);padding:9px 38px 9px 38px;font-size:14px;font-family:inherit;outline:none;transition:border-color .15s;}
+.search-in:focus{border-color:var(--o);}
+.search-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:15px;pointer-events:none;}
+.search-clr{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:var(--b);border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;color:var(--t2);display:flex;align-items:center;justify-content:center;font-weight:700;}
+
+/* ── Tags ── */
+.tag{display:inline-block;background:#f0e8ff;color:#6030b0;border:1px solid #d0b0f0;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:600;margin:1px 2px;}
+
+/* ── Filter chips ── */
+.filter-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;margin-bottom:10px;}
+.filter-row::-webkit-scrollbar{display:none;}
+.chip{padding:5px 13px;border-radius:18px;border:1.5px solid var(--b2);background:var(--c2);color:#b87040;font-size:12px;cursor:pointer;font-family:inherit;font-weight:500;white-space:nowrap;flex-shrink:0;transition:all .15s;}
+.chip.on{background:var(--o);border-color:var(--od);color:#fff;font-weight:700;}
+.chip-series{border-color:#d0b0f0;background:#f8f0ff;color:#7040c0;}
+.chip-series.on{background:#7040c0;border-color:#5030a0;}
+.chip-amt{opacity:.75;margin-left:3px;font-size:10px;}
+
+/* ── Month group ── */
+.month-grp{margin-bottom:22px;}
+.month-hdr{display:flex;align-items:center;justify-content:space-between;padding-bottom:7px;margin-bottom:10px;border-bottom:2px dashed #f0c488;}
+.month-hdr-l{display:flex;align-items:center;gap:6px;}
+.month-name{font-size:12px;font-weight:700;color:#c06818;letter-spacing:1.5px;text-transform:uppercase;}
+.month-tot{font-size:14px;font-weight:800;color:var(--o);}
+
+/* ── Record card ── */
+.rec{background:#fff;border:2px solid var(--b);border-radius:16px;margin-bottom:10px;overflow:hidden;box-shadow:0 2px 12px rgba(180,100,20,.07);transition:box-shadow .15s;}
+.rec-head{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;cursor:pointer;user-select:none;-webkit-user-select:none;}
+.rec-head:active{background:var(--c2);}
+.rec-head-l{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.rec-date{font-size:12px;color:var(--t3);}
+.rec-count{font-size:11px;color:var(--t4);}
+.rec-amt{font-size:15px;font-weight:800;color:var(--o);}
+.rec-arrow{font-size:10px;color:var(--t3);transition:transform .2s;margin-left:2px;}
+.rec-arrow.open{transform:rotate(90deg);}
+.rec-body{display:none;border-top:1px solid #f5e0c0;padding:10px 14px 12px;}
+.rec-body.open{display:block;}
+.item-row{display:flex;align-items:flex-start;justify-content:space-between;padding:5px 0;border-bottom:1px solid #faecd8;}
+.item-row:last-child{border-bottom:none;}
+.item-l{display:flex;align-items:flex-start;gap:6px;flex:1;flex-wrap:wrap;}
+.item-cat{background:#fff0e0;color:#c86820;border-radius:5px;padding:1px 6px;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px;}
+.item-name{font-size:13px;color:var(--t);font-weight:500;}
+.item-meta{font-size:11px;color:var(--t3);margin-top:1px;width:100%;}
+.item-price{font-size:13px;font-weight:700;color:#b07030;flex-shrink:0;margin-left:8px;}
+.rec-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:8px;}
+.rec-note{font-size:12px;color:var(--t3);font-style:italic;margin-top:6px;padding-top:6px;border-top:1px dashed #f0d8b8;}
+.rec-actions{display:flex;gap:6px;margin-top:10px;justify-content:flex-end;}
+.btn-sm{padding:4px 12px;border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;border:1.5px solid;}
+.btn-edit{background:var(--c2);border-color:var(--b2);color:#c07030;}
+.btn-del{background:#fff5f5;border-color:#f0b0a0;color:#c05040;}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:56px 20px;color:var(--t4);}
+.empty-ico{font-size:48px;margin-bottom:10px;}
+.empty-ttl{font-size:16px;font-weight:700;color:#c07840;}
+.empty-sub{font-size:13px;margin-top:5px;}
+
+/* ── Stats ── */
+.stat-section{background:#fff;border:2px solid var(--b);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(180,100,20,.06);}
+.stat-section-title{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#c06818;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;}
+.bar-row{margin-bottom:11px;}
+.bar-lbl{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;}
+.bar-lbl-name{color:var(--t2);font-weight:600;}
+.bar-lbl-val{color:var(--o);font-weight:800;}
+.bar-track{background:#f5e8d8;border-radius:6px;height:8px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#e87820,#f4b040);transition:width .5s ease;}
+.bar-fill-purple{background:linear-gradient(90deg,#7040c0,#a060e0);}
+.cat-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f5e8d8;}
+.cat-row:last-child{border-bottom:none;}
+.cat-pill{background:#fff0e0;color:#c86820;border-radius:6px;padding:2px 10px;font-size:11px;font-weight:700;}
+.cat-val{color:#b07030;font-weight:700;font-size:13px;}
+
+/* ── Form ── */
+.form-label{font-size:11px;color:#c07030;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;}
+.form-sec{margin-bottom:16px;}
+input[type=text],input[type=date],input[type=number],select,textarea{background:var(--c2);border:1.5px solid var(--b);border-radius:10px;color:var(--t);padding:9px 12px;font-size:14px;font-family:inherit;outline:none;width:100%;transition:border-color .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--o);}
+select{color:#b05010;}
+.date-row{display:flex;gap:10px;align-items:center;}
+.chk-lbl{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--t3);cursor:pointer;flex-shrink:0;}
+input[type=checkbox]{accent-color:var(--o);width:15px;height:15px;}
+
+/* ── Item list in form ── */
+.item-list-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.item-form-card{background:#fff;border:1.5px solid var(--b);border-radius:12px;padding:10px 12px;margin-bottom:8px;position:relative;}
+.item-form-grid{display:grid;grid-template-columns:1fr 54px 84px;gap:7px;margin-top:7px;}
+.item-form-size{display:grid;gap:7px;margin-top:7px;}
+.item-form-size.two{grid-template-columns:1fr 1fr;}
+.item-form-size.three{grid-template-columns:1fr 1fr 1fr;}
+.size-lbl{font-size:10px;color:var(--t3);font-weight:700;margin-bottom:3px;text-transform:uppercase;}
+.item-subtot{font-size:11px;color:#c07030;text-align:right;margin-top:5px;font-weight:700;}
+.btn-rm-item{position:absolute;top:8px;right:8px;background:#fff0e8;border:1px solid #f0b090;color:#c06040;border-radius:6px;cursor:pointer;font-size:12px;padding:1px 7px;font-family:inherit;font-weight:700;}
+.btn-add-item{width:100%;padding:9px;background:var(--c2);border:2px dashed #e8c088;border-radius:10px;color:var(--t3);font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;margin-bottom:14px;}
+.tot-preview{background:var(--c2);border:2px solid #f4c090;border-radius:11px;padding:9px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;}
+.tot-preview-lbl{font-size:12px;color:#c07030;font-weight:700;}
+.tot-preview-val{font-size:19px;font-weight:800;color:var(--o);}
+.form-actions{display:flex;gap:10px;}
+.btn-cancel{flex:1;padding:12px;background:var(--c2);border:2px solid var(--b2);border-radius:11px;color:var(--t3);font-size:14px;cursor:pointer;font-family:inherit;font-weight:700;}
+.btn-save{flex:2;padding:12px;background:linear-gradient(135deg,#e87820,#f4a030);border:none;border-radius:11px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(232,120,32,.32);}
+
+/* ── Series panel ── */
+.series-panel{position:fixed;inset:0;z-index:180;background:var(--c);overflow-y:auto;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);}
+.series-panel.open{transform:translateX(0);}
+.sp-hdr{background:linear-gradient(150deg,#f6e2c4,#fef2dc);border-bottom:2px solid var(--b);padding:14px 16px;position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:10px;}
+.sp-back{background:var(--c2);border:1.5px solid var(--b2);color:var(--od);border-radius:9px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;}
+.sp-info{flex:1;}
+.sp-title{font-size:17px;font-weight:800;color:var(--od);}
+.sp-meta{font-size:11px;color:var(--t3);margin-top:1px;}
+.sp-item{background:#fff;border:1.5px solid var(--b);border-radius:12px;margin:10px 14px;padding:10px 12px;}
+.sp-item-name{font-size:13px;font-weight:700;color:var(--t);}
+.sp-item-meta{font-size:11px;color:var(--t3);margin-top:3px;}
+.sp-item-price{font-size:14px;font-weight:800;color:var(--o);}
+.sp-move-btn{font-size:11px;background:#f0e8ff;border:1px solid #d0b0f0;color:#7040c0;border-radius:6px;padding:2px 8px;cursor:pointer;font-family:inherit;font-weight:700;margin-top:6px;}
+.sp-hdr-btns{display:flex;gap:6px;flex-shrink:0;}
+.btn-rename{font-size:11px;background:var(--c2);border:1px solid var(--b2);color:var(--od);border-radius:7px;padding:5px 10px;cursor:pointer;font-family:inherit;font-weight:700;}
+.btn-del-series{font-size:11px;background:#fff5f5;border:1px solid #f0b0a0;color:#c05040;border-radius:7px;padding:5px 10px;cursor:pointer;font-family:inherit;font-weight:700;}
+
+/* ── Modals ── */
+.modal-bg{position:fixed;inset:0;z-index:200;background:rgba(58,32,8,.4);backdrop-filter:blur(2px);}
+.modal-sheet{position:absolute;bottom:0;left:0;right:0;background:var(--c);border-radius:20px 20px 0 0;padding:20px 16px 44px;max-height:85vh;overflow-y:auto;}
+.modal-title{font-size:15px;font-weight:800;color:#b84a10;margin-bottom:14px;}
+.modal-sub{font-size:12px;color:var(--t3);margin-bottom:12px;}
+.modal-actions{display:flex;gap:10px;margin-top:12px;}
+.btn-modal-cancel{flex:1;padding:11px;background:var(--c2);border:2px solid var(--b2);border-radius:10px;color:var(--t3);font-size:14px;cursor:pointer;font-family:inherit;font-weight:700;}
+.btn-modal-ok{flex:2;padding:11px;background:linear-gradient(135deg,#7040c0,#9060e0);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+.btn-modal-orange{background:linear-gradient(135deg,#e87820,#f4a030)!important;}
+.series-list-btn{display:block;width:100%;text-align:left;padding:9px 14px;margin-bottom:6px;background:#f8f0ff;border:1.5px solid #d0b0f0;border-radius:10px;color:#7040c0;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+.series-list-btn-remove{background:var(--c2);border-color:var(--b2);color:var(--t3);}
+</style>
+</head>
+<body>
+<div class="stripe"></div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="hdr-brand">
+      <div class="cross cross-lg"></div>
+      <div>
+        <div class="brand-eyebrow">Merch Ledger</div>
+        <div class="brand-name">週邊記帳本</div>
+      </div>
+    </div>
+    <div class="hdr-sum">
+      <div class="sum-label">累計花費</div>
+      <div class="sum-val" id="grand-total">NT$0</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab on" data-tab="list" onclick="go('list')">📋 紀錄</button>
+    <button class="tab" data-tab="stats" onclick="go('stats')">📊 統計</button>
+    <button class="tab tab-new" data-tab="add" onclick="go('add')">＋ 新增</button>
+  </div>
+</div>
+
+<!-- LIST PAGE -->
+<div class="page" id="pg-list">
+  <div class="search-wrap">
+    <span class="search-ico">🔍</span>
+    <input class="search-in" id="search-in" type="text" placeholder="搜尋品項、備註、系列…" oninput="onSearch()">
+    <button class="search-clr" id="search-clr" style="display:none" onclick="clearSearch()">✕</button>
+  </div>
+  <div id="series-bar" style="display:none;margin-bottom:10px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <span style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;">系列</span>
+      <div style="display:flex;gap:6px;">
+        <button id="series-view-btn" style="display:none;font-size:11px;background:#f0e8ff;border:1px solid #d0b0f0;color:#7040c0;border-radius:7px;padding:2px 9px;cursor:pointer;font-family:inherit;font-weight:700;" onclick="openSP(selSeries)">查看 ▶</button>
+        <button style="font-size:11px;background:var(--c2);border:1px solid var(--b2);color:var(--od);border-radius:7px;padding:2px 9px;cursor:pointer;font-family:inherit;font-weight:700;" onclick="openCreateSeries()">＋ 新增</button>
+      </div>
+    </div>
+    <div class="filter-row" id="series-chips"></div>
+  </div>
+  <div id="month-bar" style="display:none;margin-bottom:10px;">
+    <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;">月份</div>
+    <div class="filter-row" id="month-chips"></div>
+  </div>
+  <div id="records"></div>
+</div>
+
+<!-- STATS PAGE -->
+<div class="page" id="pg-stats" style="display:none">
+  <div class="stat-section">
+    <div class="stat-section-title"><div class="cross cross-sm"></div> 每月花費</div>
+    <div id="stat-month"></div>
+  </div>
+  <div class="stat-section">
+    <div class="stat-section-title"><div class="cross cross-sm"></div> 類別分佈</div>
+    <div id="stat-cat"></div>
+  </div>
+  <div class="stat-section">
+    <div class="stat-section-title"><div class="cross cross-sm"></div> 系列花費</div>
+    <div id="stat-series"></div>
+  </div>
+</div>
+
+<!-- ADD/EDIT PAGE -->
+<div class="page" id="pg-add" style="display:none">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;">
+    <div class="cross cross-lg"></div>
+    <div>
+      <div style="font-size:17px;font-weight:800;color:var(--od)" id="form-title">新增購買紀錄</div>
+      <div style="font-size:11px;color:var(--t3)" id="form-sub">一次可加入多個品項</div>
+    </div>
+  </div>
+
+  <div class="form-sec">
+    <label class="form-label">購買日期</label>
+    <div class="date-row">
+      <label class="chk-lbl"><input type="checkbox" id="has-date" checked onchange="toggleDate()"> 有日期</label>
+      <input type="date" id="form-date" style="flex:1">
+      <span id="no-date-hint" style="display:none;font-size:12px;color:var(--t3);font-style:italic">日期不詳</span>
+    </div>
+  </div>
+
+  <div class="form-sec">
+    <div class="item-list-hdr">
+      <label class="form-label" style="margin:0">品項</label>
+    </div>
+    <div id="item-rows"></div>
+    <button class="btn-add-item" onclick="addItemRow()">＋ 新增品項</button>
+  </div>
+
+  <div class="form-sec">
+    <label class="form-label">備註（選填）</label>
+    <input type="text" id="form-note" placeholder="例：C103 攤位購入">
+  </div>
+
+  <div class="tot-preview" id="tot-preview" style="display:none">
+    <span class="tot-preview-lbl">✕ 這次合計</span>
+    <span class="tot-preview-val" id="preview-val">NT$0</span>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn-cancel" onclick="cancelForm()">取消</button>
+    <button class="btn-save" onclick="submitForm()" id="save-btn">儲存紀錄</button>
+  </div>
+</div>
+
+<!-- SERIES PANEL -->
+<div class="series-panel" id="series-panel">
+  <div class="sp-hdr">
+    <button class="sp-back" onclick="closeSP()">← 返回</button>
+    <div class="sp-info">
+      <div class="sp-title" id="sp-title"></div>
+      <div class="sp-meta" id="sp-meta"></div>
+    </div>
+    <div class="sp-hdr-btns" id="sp-edit-btns">
+      <button class="btn-rename" onclick="renameSeries()">改名</button>
+      <button class="btn-del-series" onclick="deleteSeries()">刪除</button>
+    </div>
+  </div>
+  <div id="sp-items" style="padding-bottom:40px;"></div>
+</div>
+
+<!-- MODAL: Create/Rename Series -->
+<div class="modal-bg" id="create-series-modal" style="display:none" onclick="closeCsModal(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-title" id="cs-title">新增系列</div>
+    <input type="text" id="cs-name" placeholder="例：一週年、2024生日…" style="margin-bottom:4px;">
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeCsModalDirect()">取消</button>
+      <button class="btn-modal-ok" id="cs-confirm" onclick="confirmCs()">建立</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Move Series -->
+<div class="modal-bg" id="move-modal" style="display:none" onclick="closeMoveModal(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-title">移動到系列</div>
+    <div class="modal-sub" id="move-item-lbl"></div>
+    <div id="move-list"></div>
+    <div style="margin-top:10px;">
+      <input type="text" id="move-new" placeholder="輸入新系列名稱…" style="margin-bottom:8px;">
+      <button class="btn-modal-ok" style="width:100%;padding:11px;" onclick="confirmMoveNew()">新增並移入</button>
+    </div>
+  </div>
+</div>
+
+<div class="stripe" style="position:fixed;bottom:0;left:0;right:0;z-index:99;"></div>
+
+<script>
+const CATS=["公仔/娃娃","壓克力","海報","徽章/別針","卡帶/CD","書籍/同人誌","服飾","文具","其他"];
+const DOLL=["公仔/娃娃"];
+
+// Migrate from old key if needed
+(function(){
+  const old=localStorage.getItem('merch_records');
+  if(old&&!localStorage.getItem('merch_recs')){
+    localStorage.setItem('merch_recs',old);
+  }
+})();
+let recs=JSON.parse(localStorage.getItem('merch_recs')||'[]');
+let selMonth='all',selSeries='all',q='',editId=null,scrollY=0;
+let fItems=[],fHasDate=true,fItemCount=0;
+let movingItem=null,csMode='create',csOldName='';
+
+function sv(){localStorage.setItem('merch_recs',JSON.stringify(recs));}
+function sid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+function fmt(n){return'NT$'+Math.round(n).toLocaleString('zh-TW');}
+function rTot(r){return r.items.reduce((s,it)=>s+it.price*it.qty,0);}
+function fmtD(d){if(!d)return'日期不詳';const[y,m,dy]=d.split('-');return`${y}/${+m}/${+dy}`;}
+function fmtM(k){if(k==='?')return'日期不詳';const[y,m]=k.split('-');return`${y}年${+m}月`;}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function isDoll(c){return DOLL.includes(c);}
+
+// Manual series store
+function getMS(){return JSON.parse(localStorage.getItem('merch_series')||'[]');}
+function setMS(l){localStorage.setItem('merch_series',JSON.stringify(l));}
+function getAllSeries(){
+  const s=new Set(getMS());
+  recs.forEach(r=>r.items.forEach(it=>(it.tags||[]).forEach(t=>s.add(t))));
+  return[...s].sort();
+}
+
+// ── Tab navigation ──
+function go(tab,restore){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===tab));
+  ['list','stats','add'].forEach(p=>document.getElementById('pg-'+p).style.display=p===tab?'block':'none');
+  if(tab==='list'){renderList();if(restore)setTimeout(()=>window.scrollTo(0,scrollY),40);}
+  if(tab==='stats')renderStats();
+  if(tab==='add'&&!editId)resetForm();
+}
+
+// ── Search ──
+function onSearch(){
+  q=document.getElementById('search-in').value.trim();
+  document.getElementById('search-clr').style.display=q?'flex':'none';
+  renderList();
+}
+function clearSearch(){
+  document.getElementById('search-in').value='';q='';
+  document.getElementById('search-clr').style.display='none';
+  renderList();
+}
+function matches(rec){
+  if(!q)return true;
+  const lq=q.toLowerCase();
+  if(rec.note&&rec.note.toLowerCase().includes(lq))return true;
+  return rec.items.some(it=>
+    (it.name&&it.name.toLowerCase().includes(lq))||
+    (it.category&&it.category.toLowerCase().includes(lq))||
+    (it.tags&&it.tags.some(t=>t.toLowerCase().includes(lq)))
+  );
+}
+
+// ── Render List ──
+function renderList(){
+  updHdr();
+  // Series chips
+  const allS=getAllSeries();
+  const hasOther=recs.some(r=>r.items.some(it=>!it.tags||it.tags.length===0));
+  const sBar=document.getElementById('series-bar');
+  sBar.style.display=recs.length>0||allS.length>0?'block':'none';
+  if(allS.length===0&&!hasOther){
+    document.getElementById('series-chips').innerHTML='<span style="font-size:12px;color:var(--t3)">尚無系列</span>';
+  } else {
+    document.getElementById('series-chips').innerHTML=
+      `<button class="chip chip-series${selSeries==='all'?' on':''}" onclick="setSeries('all')">全部</button>`+
+      allS.map(t=>`<button class="chip chip-series${selSeries===t?' on':''}" onclick="setSeries('${esc(t)}')">${esc(t)}</button>`).join('')+
+      (hasOther?`<button class="chip chip-series${selSeries==='__other__'?' on':''}" onclick="setSeries('__other__')">其他</button>`:'');
+  }
+  document.getElementById('series-view-btn').style.display=selSeries!=='all'?'block':'none';
+
+  // Month chips
+  const mKeys=[...new Set(recs.map(r=>r.date?r.date.slice(0,7):'?'))].sort((a,b)=>{if(a==='?')return 1;if(b==='?')return-1;return b.localeCompare(a);});
+  const mBar=document.getElementById('month-bar');
+  mBar.style.display=recs.length>0?'block':'none';
+  document.getElementById('month-chips').innerHTML=
+    `<button class="chip${selMonth==='all'?' on':''}" onclick="setMonth('all')">全部</button>`+
+    mKeys.map(k=>{
+      const t=recs.filter(r=>(r.date?r.date.slice(0,7):'?')===k).reduce((s,r)=>s+rTot(r),0);
+      return`<button class="chip${selMonth===k?' on':''}" onclick="setMonth('${k}')">${fmtM(k)}<span class="chip-amt">${fmt(t)}</span></button>`;
+    }).join('');
+
+  // Filter
+  let seriesIds=null;
+  if(selSeries!=='all'){
+    const si=getSeriesItems(selSeries);
+    seriesIds=new Set(si.map(e=>e.rec.id));
+  }
+  let filtered=recs;
+  if(seriesIds)filtered=filtered.filter(r=>seriesIds.has(r.id));
+  if(selMonth!=='all')filtered=filtered.filter(r=>(r.date?r.date.slice(0,7):'?')===selMonth);
+  if(q)filtered=filtered.filter(r=>matches(r));
+
+  const container=document.getElementById('records');
+  if(filtered.length===0){
+    container.innerHTML=`<div class="empty"><div class="empty-ico">✕</div><div class="empty-ttl">${recs.length===0?'還沒有任何紀錄':'找不到符合的紀錄'}</div>${recs.length===0?'<div class="empty-sub">點「＋ 新增」開始記帳</div>':''}</div>`;
+    return;
+  }
+  const grp={};
+  filtered.forEach(r=>{const k=r.date?r.date.slice(0,7):'?';if(!grp[k])grp[k]=[];grp[k].push(r);});
+  const sk=Object.keys(grp).sort((a,b)=>{if(a==='?')return 1;if(b==='?')return-1;return b.localeCompare(a);});
+  container.innerHTML=sk.map(mk=>{
+    const rs=grp[mk];
+    const mt=rs.reduce((s,r)=>s+rTot(r),0);
+    return`<div class="month-grp">
+      <div class="month-hdr">
+        <div class="month-hdr-l"><div class="cross cross-sm"></div><span class="month-name">${fmtM(mk)}</span></div>
+        <span class="month-tot">${fmt(mt)}</span>
+      </div>
+      ${rs.map(r=>renderCard(r)).join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderCard(rec){
+  const tot=rTot(rec);
+  const allTags=[...new Set(rec.items.flatMap(it=>it.tags||[]))];
+  const itemsHtml=rec.items.map(it=>{
+    const sz=it.size?fmtSize(it.size,it.category):'';
+    return`<div class="item-row">
+      <div class="item-l">
+        <span class="item-cat">${esc(it.category)}</span>
+        <span class="item-name">${esc(it.name)}${it.qty>1?` <span style="color:var(--t3);font-size:11px">×${it.qty}</span>`:''}</span>
+        ${sz?`<span class="item-meta">${sz}</span>`:''}
+      </div>
+      <span class="item-price">${fmt(it.price*it.qty)}</span>
+    </div>`;
+  }).join('');
+  const tags=allTags.length?`<div class="rec-tags">${allTags.map(t=>`<span class="tag">🏷 ${esc(t)}</span>`).join('')}</div>`:'';
+  const note=rec.note?`<div class="rec-note">📝 ${esc(rec.note)}</div>`:'';
+  return`<div class="rec" id="card-${rec.id}">
+    <div class="rec-head" onclick="toggleCard('${rec.id}')">
+      <div class="rec-head-l">
+        <span class="rec-date">${fmtD(rec.date)}</span>
+        <span class="rec-count">${rec.items.length}件</span>
+        ${allTags.length?`<span class="tag" style="font-size:10px">🏷${allTags[0]}${allTags.length>1?` +${allTags.length-1}`:''}</span>`:''}
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <span class="rec-amt">${fmt(tot)}</span>
+        <span class="rec-arrow open" id="arr-${rec.id}">▶</span>
+      </div>
+    </div>
+    <div class="rec-body open" id="body-${rec.id}">
+      ${itemsHtml}${tags}${note}
+      <div class="rec-actions">
+        <button class="btn-sm btn-edit" onclick="event.stopPropagation();editRec('${rec.id}')">編輯</button>
+        <button class="btn-sm btn-del" onclick="event.stopPropagation();delRec('${rec.id}')">刪除</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleCard(id){
+  const b=document.getElementById('body-'+id);
+  const a=document.getElementById('arr-'+id);
+  const open=b.classList.toggle('open');
+  if(a)a.classList.toggle('open',open);
+}
+
+function fmtSize(sz,cat){
+  if(!sz)return'';
+  if(isDoll(cat)&&sz.d)return`${sz.w}×${sz.h}×${sz.d} cm`;
+  if(sz.h)return`${sz.w}×${sz.h} cm`;
+  return`${sz.w} cm`;
+}
+
+function setMonth(k){selMonth=k;renderList();}
+function setSeries(s){selSeries=s;document.getElementById('series-view-btn').style.display=s!=='all'?'block':'none';renderList();}
+function delRec(id){
+  const card=document.getElementById('card-'+id);
+  if(!card)return;
+  // show inline confirm bar
+  if(card.querySelector('.del-confirm'))return; // already showing
+  const bar=document.createElement('div');
+  bar.className='del-confirm';
+  bar.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#fff5f5;border-top:1px solid #f0b0a0;';
+  bar.innerHTML=`<span style="font-size:13px;color:#c05040;font-weight:600">確定刪除這筆紀錄？</span>
+    <div style="display:flex;gap:8px;">
+      <button onclick="event.stopPropagation();document.getElementById('card-${id}').querySelector('.del-confirm').remove()" style="padding:4px 12px;background:var(--c2);border:1.5px solid var(--b2);border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:700;color:var(--t3)">取消</button>
+      <button onclick="event.stopPropagation();confirmDel('${id}')" style="padding:4px 12px;background:#c05040;border:none;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:700;color:#fff">刪除</button>
+    </div>`;
+  card.appendChild(bar);
+}
+function confirmDel(id){recs=recs.filter(r=>r.id!==id);sv();renderList();}
+function updHdr(){
+  document.getElementById('grand-total').textContent=fmt(recs.reduce((s,r)=>s+rTot(r),0));
+}
+
+// ── Stats ──
+function renderStats(){
+  updHdr();
+  // Monthly
+  const mMap={};
+  recs.forEach(r=>{const k=r.date?r.date.slice(0,7):'?';mMap[k]=(mMap[k]||0)+rTot(r);});
+  const mE=Object.entries(mMap).sort((a,b)=>{if(a[0]==='?')return 1;if(b[0]==='?')return-1;return b[0].localeCompare(a[0]);});
+  const mMax=mE.length?Math.max(...mE.map(([,v])=>v)):1;
+  document.getElementById('stat-month').innerHTML=mE.length?mE.map(([k,v])=>`
+    <div class="bar-row">
+      <div class="bar-lbl"><span class="bar-lbl-name">${fmtM(k)}</span><span class="bar-lbl-val">${fmt(v)}</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(v/mMax*100).toFixed(1)}%"></div></div>
+    </div>`).join(''):'<div style="color:var(--t3);font-size:13px">尚無資料</div>';
+
+
+  // Category
+  const cMap={};
+  recs.forEach(r=>r.items.forEach(it=>{cMap[it.category]=(cMap[it.category]||0)+it.price*it.qty;}));
+  const cE=Object.entries(cMap).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('stat-cat').innerHTML=cE.length?cE.map(([c,v])=>`
+    <div class="cat-row"><span class="cat-pill">${esc(c)}</span><span class="cat-val">${fmt(v)}</span></div>`).join(''):'<div style="color:var(--t3);font-size:13px">尚無資料</div>';
+
+  // Series
+  const allS=getAllSeries();
+  const sMap={};
+  recs.forEach(r=>r.items.forEach(it=>(it.tags||[]).forEach(t=>{sMap[t]=(sMap[t]||0)+it.price*it.qty;})));
+  allS.forEach(s=>{if(!sMap[s])sMap[s]=0;});
+  const sE=Object.entries(sMap).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('stat-series').innerHTML=sE.length?sE.map(([s,v])=>`
+    <div class="cat-row"><span class="tag" style="cursor:pointer" onclick="setSeries('${esc(s)}');go('list')">🏷 ${esc(s)}</span><span class="cat-val">${fmt(v)}</span></div>`).join(''):'<div style="color:var(--t3);font-size:13px">尚無系列</div>';
+}
+
+// ── Form ──
+function resetForm(){
+  editId=null;fItems=[];fHasDate=true;fItemCount=0;
+  document.getElementById('form-title').textContent='新增購買紀錄';
+  document.getElementById('form-sub').textContent='一次可加入多個品項';
+  document.getElementById('save-btn').textContent='儲存紀錄';
+  document.getElementById('has-date').checked=true;
+  document.getElementById('form-date').style.display='';
+  document.getElementById('no-date-hint').style.display='none';
+  document.getElementById('form-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('form-note').value='';
+  document.getElementById('item-rows').innerHTML='';
+  addItemRow();
+  updPreview();
+}
+function toggleDate(){
+  fHasDate=document.getElementById('has-date').checked;
+  document.getElementById('form-date').style.display=fHasDate?'':'none';
+  document.getElementById('no-date-hint').style.display=fHasDate?'none':'inline';
+}
+function addItemRow(item){
+  const id=fItemCount++;
+  const opts=CATS.map(c=>`<option value="${c}"${item&&c===item.category?' selected':''}>${c}</option>`).join('');
+  const div=document.createElement('div');
+  div.className='item-form-card';div.id='ir-'+id;
+  const catVal=item?item.category:CATS[0];
+  const sizeHtml=buildSizeHtml(id,catVal,item?.size);
+  const existingTag=item?.tags?.[0]||'';
+  const seriesHtml=buildSeriesHtml(id,existingTag);
+  div.innerHTML=`
+    <input type="text" placeholder="品項名稱" value="${item?esc(item.name):''}" oninput="updPreview()" class="iname">
+    <div class="item-form-grid">
+      <select onchange="onCatChange(${id},this.value)" class="icat">${opts}</select>
+      <input type="number" min="1" value="${item?item.qty:1}" oninput="updPreview()" class="iqty" style="text-align:center;padding:9px 4px">
+      <input type="number" min="0" step="1" value="${item?item.price:''}" placeholder="金額" oninput="updPreview()" class="iprice" style="padding:9px 8px">
+    </div>
+    <div id="size-${id}">${sizeHtml}</div>
+    ${seriesHtml}
+    <div class="item-subtot" id="st-${id}"></div>
+    <button class="btn-rm-item" style="display:none" onclick="rmItem(${id})">✕</button>`;
+  document.getElementById('item-rows').appendChild(div);
+  updRmBtns();updPreview();
+}
+function buildSizeHtml(id,cat,sz){
+  if(isDoll(cat)){
+    return`<div class="item-form-size three" style="margin-top:7px">
+      <div><div class="size-lbl">長 cm</div><input type="number" min="0" step="0.1" value="${sz?.w||''}" placeholder="0" class="sw" oninput="updPreview()"></div>
+      <div><div class="size-lbl">寬 cm</div><input type="number" min="0" step="0.1" value="${sz?.h||''}" placeholder="0" class="sh" oninput="updPreview()"></div>
+      <div><div class="size-lbl">高 cm</div><input type="number" min="0" step="0.1" value="${sz?.d||''}" placeholder="0" class="sd" oninput="updPreview()"></div>
+    </div>`;
+  }
+  return`<div class="item-form-size two" style="margin-top:7px">
+    <div><div class="size-lbl">長 cm</div><input type="number" min="0" step="0.1" value="${sz?.w||''}" placeholder="0" class="sw" oninput="updPreview()"></div>
+    <div><div class="size-lbl">寬 cm</div><input type="number" min="0" step="0.1" value="${sz?.h||''}" placeholder="0" class="sh" oninput="updPreview()"></div>
+  </div>`;
+}
+
+function buildSeriesHtml(id, existingTag){
+  const allS=getAllSeries();
+  const opts=`<option value="">不分類</option>`+allS.map(s=>`<option value="${esc(s)}"${existingTag===s?' selected':''}>${esc(s)}</option>`).join('');
+  return`<div style="margin-top:7px;display:flex;gap:7px;align-items:center;">
+    <select class="iseries" style="flex:1;color:#7040c0;background:#f8f0ff;border-color:#d0b0f0;">${opts}</select>
+    <button type="button" onclick="addSeriesFromItem(${id})" style="padding:7px 10px;background:#f0e8ff;border:1.5px solid #d0b0f0;border-radius:9px;color:#7040c0;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">＋ 新系列</button>
+  </div>`;
+}
+
+let addSeriesTargetId=null;
+function addSeriesFromItem(id){
+  addSeriesTargetId=id;
+  csMode='addFromItem';csOldName='';
+  document.getElementById('cs-title').textContent='新增系列';
+  document.getElementById('cs-name').value='';
+  document.getElementById('cs-confirm').textContent='建立';
+  document.getElementById('create-series-modal').style.display='block';
+  setTimeout(()=>document.getElementById('cs-name').focus(),100);
+}
+function onCatChange(id,cat){
+  document.getElementById('size-'+id).innerHTML=buildSizeHtml(id,cat,null);
+}
+function rmItem(id){document.getElementById('ir-'+id).remove();updRmBtns();updPreview();}
+function updRmBtns(){
+  const rows=document.getElementById('item-rows')?.querySelectorAll('.item-form-card')||[];
+  rows.forEach(r=>r.querySelector('.btn-rm-item').style.display=rows.length>1?'':'none');
+}
+function getFormItems(){
+  const container=document.getElementById('item-rows');
+  if(!container)return[];
+  return Array.from(container.querySelectorAll('.item-form-card')).map(row=>({
+    name:row.querySelector('.iname').value.trim(),
+    category:row.querySelector('.icat').value,
+    qty:parseInt(row.querySelector('.iqty').value)||1,
+    price:parseFloat(row.querySelector('.iprice').value)||0,
+    size:getSize(row),
+    tags:(()=>{const s=row.querySelector('.iseries')?.value;return s?[s]:[];})(),
+  }));
+}
+function getSize(row){
+  const w=parseFloat(row.querySelector('.sw')?.value)||0;
+  const h=parseFloat(row.querySelector('.sh')?.value)||0;
+  const d=parseFloat(row.querySelector('.sd')?.value)||0;
+  if(!w&&!h&&!d)return null;
+  return{w,h,...(d?{d}:{})};
+}
+function updPreview(){
+  const items=getFormItems();
+  const tot=items.reduce((s,it)=>s+(it.price||0)*(it.qty||1),0);
+  const container=document.getElementById('item-rows');
+  if(container)container.querySelectorAll('.item-form-card').forEach((row,i)=>{
+    const it=items[i];
+    const st=row.querySelector('[id^="st-"]');
+    if(st)st.textContent=it&&it.price?'小計 '+fmt(it.price*it.qty):'';
+  });
+  const p=document.getElementById('tot-preview');
+  if(tot>0){p.style.display='flex';document.getElementById('preview-val').textContent=fmt(tot);}
+  else p.style.display='none';
+}
+function submitForm(){
+  const items=getFormItems().filter(it=>it.name.trim());
+  if(!items.length){alert('請至少填寫一個品項名稱和金額');return;}
+  const date=fHasDate?document.getElementById('form-date').value:null;
+  const note=document.getElementById('form-note').value.trim();
+
+  const rec={id:editId||sid(),date,items,note};
+  if(editId){const i=recs.findIndex(r=>r.id===editId);if(i!==-1)recs[i]=rec;}
+  else recs.unshift(rec);
+  sv();editId=null;
+  go('list',true);
+}
+function cancelForm(){editId=null;go('list',true);}
+function editRec(id){
+  scrollY=window.scrollY;
+  const rec=recs.find(r=>r.id===id);if(!rec)return;
+  editId=id;
+  document.getElementById('form-title').textContent='編輯紀錄';
+  document.getElementById('form-sub').textContent='修改現有的購買資料';
+  document.getElementById('save-btn').textContent='儲存修改';
+  fHasDate=!!rec.date;
+  document.getElementById('has-date').checked=fHasDate;
+  document.getElementById('form-date').style.display=fHasDate?'':'none';
+  document.getElementById('no-date-hint').style.display=fHasDate?'none':'inline';
+  if(rec.date)document.getElementById('form-date').value=rec.date;
+  document.getElementById('form-note').value=rec.note||'';
+  document.getElementById('item-rows').innerHTML='';
+  fItemCount=0;
+  rec.items.forEach(it=>addItemRow(it));
+  updPreview();
+  go('add');
+}
+
+// ── Series Panel ──
+function getSeriesItems(tag){
+  const result=[];
+  recs.forEach((rec,ri)=>rec.items.forEach((it,ii)=>{
+    if(tag==='__other__'){if(!it.tags||it.tags.length===0)result.push({rec,item:it,ri,ii});}
+    else if((it.tags||[]).includes(tag))result.push({rec,item:it,ri,ii});
+  }));
+  return result;
+}
+function openSP(tag){
+  if(!tag||tag==='all')return;
+  const items=getSeriesItems(tag);
+  const tot=items.reduce((s,e)=>s+e.item.price*e.item.qty,0);
+  document.getElementById('sp-title').textContent=tag==='__other__'?'未分類 / 其他':tag;
+  document.getElementById('sp-meta').textContent=`${items.length} 件・合計 ${fmt(tot)}`;
+  // hide rename/delete for __other__
+  const editBtns=document.getElementById('sp-edit-btns');
+  if(editBtns)editBtns.style.display=tag==='__other__'?'none':'flex';
+  renderSPItems(tag);
+  document.getElementById('series-panel').classList.add('open');
+}
+function closeSP(){document.getElementById('series-panel').classList.remove('open');}
+function renderSPItems(tag){
+  const items=getSeriesItems(tag||selSeries);
+  const c=document.getElementById('sp-items');
+  if(!items.length){c.innerHTML='<div style="text-align:center;padding:40px;color:var(--t3)">此系列沒有品項</div>';return;}
+  c.innerHTML=items.map(({rec,item,ri,ii})=>`
+    <div class="sp-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="sp-item-name">${esc(item.name)}</div>
+          <div class="sp-item-meta">${esc(item.category)} · ${fmtD(rec.date)}${item.qty>1?' ×'+item.qty:''}</div>
+        </div>
+        <div class="sp-item-price">${fmt(item.price*item.qty)}</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;align-items:center;">
+        ${(item.tags||[]).map(t=>`<span class="tag">🏷 ${esc(t)}</span>`).join('')}
+        <button class="sp-move-btn" onclick="openMoveModal('${rec.id}',${ii})">移動系列</button>
+      </div>
+    </div>`).join('');
+}
+function renameSeries(){
+  const old=selSeries;
+  if(!old||old==='all'||old==='__other__')return;
+  csMode='rename';csOldName=old;
+  document.getElementById('cs-title').textContent='重新命名系列';
+  document.getElementById('cs-name').value=old;
+  document.getElementById('cs-confirm').textContent='確認改名';
+  document.getElementById('create-series-modal').style.display='block';
+  setTimeout(()=>document.getElementById('cs-name').focus(),100);
+}
+function deleteSeries(){
+  const tag=selSeries;
+  if(!tag||tag==='all'||tag==='__other__')return;
+  // show inline confirm in panel header
+  const hdr=document.querySelector('.sp-hdr');
+  if(hdr.querySelector('.del-series-confirm'))return;
+  const bar=document.createElement('div');
+  bar.className='del-series-confirm';
+  bar.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#fff5f5;border-top:1px solid #f0b0a0;';
+  bar.innerHTML=`<span style="font-size:12px;color:#c05040;font-weight:600">刪除「${esc(tag)}」？標籤一併移除</span>
+    <div style="display:flex;gap:8px;">
+      <button onclick="this.closest('.del-series-confirm').remove()" style="padding:3px 10px;background:var(--c2);border:1.5px solid var(--b2);border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:700;color:var(--t3)">取消</button>
+      <button onclick="confirmDelSeries('${esc(tag)}')" style="padding:3px 10px;background:#c05040;border:none;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:700;color:#fff">刪除</button>
+    </div>`;
+  hdr.appendChild(bar);
+}
+function confirmDelSeries(tag){
+  setMS(getMS().filter(s=>s!==tag));
+  recs.forEach(rec=>rec.items.forEach(it=>{if(it.tags)it.tags=it.tags.filter(t=>t!==tag);}));
+  sv();closeSP();selSeries='all';renderList();
+}
+
+// ── Create Series Modal ──
+function openCreateSeries(){
+  csMode='create';csOldName='';
+  document.getElementById('cs-title').textContent='新增系列';
+  document.getElementById('cs-name').value='';
+  document.getElementById('cs-confirm').textContent='建立';
+  document.getElementById('create-series-modal').style.display='block';
+  setTimeout(()=>document.getElementById('cs-name').focus(),100);
+}
+function confirmCs(){
+  const name=document.getElementById('cs-name').value.trim();
+  if(!name){alert('請輸入系列名稱');return;}
+  if(csMode==='create'){
+    const list=getMS();
+    if(list.includes(name)){alert('此系列已存在');return;}
+    list.push(name);setMS(list);
+    closeCsModalDirect();renderList();setSeries(name);
+  } else if(csMode==='addFromItem'){
+    const list=getMS();
+    if(!list.includes(name)){list.push(name);setMS(list);}
+    // rebuild series selects in all item rows, select new series for target row
+    const itemRows=document.getElementById('item-rows');
+    if(itemRows)itemRows.querySelectorAll('.item-form-card').forEach(row=>{
+      const rowId=row.id.replace('ir-','');
+      const sel=row.querySelector('.iseries');
+      const cur=sel?sel.value:'';
+      const newOpts=`<option value="">不分類</option>`+getAllSeries().map(s=>`<option value="${esc(s)}"${(String(rowId)===String(addSeriesTargetId)?name:cur)===s?' selected':''}>${esc(s)}</option>`).join('');
+      if(sel)sel.innerHTML=newOpts;
+    });
+    closeCsModalDirect();
+  } else {
+    const list=getMS();
+    const idx=list.indexOf(csOldName);
+    if(idx!==-1)list[idx]=name;else list.push(name);
+    setMS(list);
+    recs.forEach(rec=>rec.items.forEach(it=>{if(it.tags)it.tags=it.tags.map(t=>t===csOldName?name:t);}));
+    sv();closeCsModalDirect();
+    selSeries=name;
+    closeSP();renderList();
+    openSP(name);
+  }
+}
+function closeCsModal(e){if(e.target===document.getElementById('create-series-modal'))closeCsModalDirect();}
+function closeCsModalDirect(){document.getElementById('create-series-modal').style.display='none';}
+
+// ── Move Modal ──
+function openMoveModal(recId,itemIdx){
+  movingItem={recId,itemIdx};
+  const rec=recs.find(r=>r.id===recId);
+  const item=rec?.items[itemIdx];
+  document.getElementById('move-item-lbl').textContent=item?item.name:'';
+  document.getElementById('move-new').value='';
+  const allS=getAllSeries();
+  const curTag=item?.tags?.[0]||'';
+  document.getElementById('move-list').innerHTML=
+    allS.filter(t=>t!==curTag).map(t=>`<button class="series-list-btn" onclick="confirmMove('${esc(t)}')">${esc(t)}</button>`).join('')+
+    (curTag?`<button class="series-list-btn series-list-btn-remove" onclick="confirmMove('__remove__')">🗑 移除標籤（移至其他）</button>`:'');
+  document.getElementById('move-modal').style.display='block';
+}
+function confirmMove(tag){
+  if(!movingItem)return;
+  const{recId,itemIdx}=movingItem;
+  const ri=recs.findIndex(r=>r.id===recId);if(ri===-1)return;
+  if(tag==='__remove__')recs[ri].items[itemIdx].tags=[];
+  else recs[ri].items[itemIdx].tags=[tag];
+  sv();closeMoveModalDirect();
+  renderSPItems(selSeries);renderList();
+}
+function confirmMoveNew(){
+  const name=document.getElementById('move-new').value.trim();
+  if(!name)return;
+  const list=getMS();if(!list.includes(name)){list.push(name);setMS(list);}
+  confirmMove(name);
+}
+function closeMoveModal(e){if(e.target===document.getElementById('move-modal'))closeMoveModalDirect();}
+function closeMoveModalDirect(){document.getElementById('move-modal').style.display='none';movingItem=null;}
+
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+renderList();updHdr();
+</script>
+</body>
+</html>
