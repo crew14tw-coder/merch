@@ -1,4 +1,4 @@
-const CACHE = 'merch-v4';
+const CACHE = 'merch-v5';
 const FILES = ['./index.html', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', e => {
@@ -14,4 +14,3 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
 });
-);
